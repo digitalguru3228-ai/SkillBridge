@@ -12,13 +12,38 @@ require_once __DIR__ . '/../db.php';
 
 function sbActivityColumns(PDO $pdo, string $table): array {
     static $cache = [];
-    if (isset($cache[$table])) return $cache[$table];
-    $q = $pdo->prepare('SELECT column_name, is_nullable, column_default FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name=?');
-    $q->execute([$table]);
-    $map = [];
-    foreach ($q->fetchAll() as $r) {
-        $map[(string)$r['column_name']] = $r;
+
+    if (isset($cache[$table])) {
+        return $cache[$table];
     }
+
+    $q = $pdo->prepare(
+        'SELECT COLUMN_NAME, IS_NULLABLE, COLUMN_DEFAULT
+         FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = ?'
+    );
+
+    $q->execute([$table]);
+
+    $map = [];
+
+    while ($r = $q->fetch(PDO::FETCH_ASSOC)) {
+        // MySQL normally returns uppercase metadata names here,
+        // but handle either casing safely.
+        $columnName = $r['COLUMN_NAME'] ?? $r['column_name'] ?? null;
+
+        if ($columnName === null || $columnName === '') {
+            continue;
+        }
+
+        $map[(string)$columnName] = [
+            'column_name' => (string)$columnName,
+            'is_nullable' => $r['IS_NULLABLE'] ?? $r['is_nullable'] ?? null,
+            'column_default' => $r['COLUMN_DEFAULT'] ?? $r['column_default'] ?? null,
+        ];
+    }
+
     return $cache[$table] = $map;
 }
 
