@@ -1,20 +1,10 @@
-FROM php:8.2-apache-bookworm
+FROM php:8.2-cli
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libcurl4-openssl-dev \
         libzip-dev \
     && docker-php-ext-install pdo_mysql curl zip \
-    \
-    && find /etc/apache2/mods-enabled -type l -name 'mpm_*.load' -delete \
-    && find /etc/apache2/mods-enabled -type l -name 'mpm_*.conf' -delete \
-    \
-  && a2dismod mpm_event || true \
-    && a2dismod mpm_worker || true \
-    && a2dismod mpm_prefork || true \
-    && a2enmod mpm_prefork \
-    && a2enmod rewrite \
-    && a2enmod headers \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
@@ -26,4 +16,6 @@ RUN chown -R www-data:www-data /var/www/html \
     && find /var/www/html -type f -exec chmod 644 {} \; \
     && if [ -d /var/www/html/uploads ]; then chmod -R 775 /var/www/html/uploads; fi
 
-EXPOSE 80
+EXPOSE 8080
+
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "/var/www/html"]
