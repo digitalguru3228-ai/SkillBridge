@@ -8,6 +8,26 @@ function e(mixed $val): string {
     return htmlspecialchars((string)$val, ENT_QUOTES, 'UTF-8');
 }
 
+function renderUnlinkedCandidateError(): void {
+    http_response_code(403);
+    echo '<!doctype html>';
+    echo '<html lang="en"><head>';
+    echo '<meta charset="utf-8">';
+    echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
+    echo '<title>Candidate Not Linked</title>';
+    echo '<style>body{font-family:Arial,sans-serif;background:#f4f7fc;color:#0f172a;padding:40px 20px;}';
+    echo '.box{max-width:520px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:28px;text-align:center;box-shadow:0 10px 30px rgba(15,23,42,.05);}';
+    echo '.btn{display:inline-block;margin-top:18px;padding:10px 16px;background:#2563eb;color:#fff;text-decoration:none;border-radius:10px;font-weight:600;}';
+    echo '</style></head><body>';
+    echo '<div class="box">';
+    echo '<h2>Student account is not linked</h2>';
+    echo '<p>Your account is not yet associated with a candidate profile, so you cannot access assessments.</p>';
+    echo '<p>Please contact your administrator or return to the dashboard.</p>';
+    echo '<a class="btn" href="index.php">Return to Dashboard</a>';
+    echo '</div></body></html>';
+    exit;
+}
+
 $pdo = db();
 $candidateId = getStudentCandidateId($pdo);
 
@@ -23,12 +43,26 @@ $studentName = $_SESSION['user_name'] ?? 'Student User';
 $requestedAssessmentId = (int)($_GET['assessment_id'] ?? 0);
 $industryAssessments = [];
 $iaStmt = $pdo->prepare("
-    SELECT DISTINCT ia.id, ia.title, ia.description, ia.duration_mins,
-           ia.passing_score_pct, ia.opportunity_id, o.title AS opportunity_title,
-           (SELECT COUNT(*) FROM industry_assessment_questions iaq WHERE iaq.assessment_id = ia.id) AS question_count
+    SELECT DISTINCT
+           ia.id,
+           ia.title,
+           ia.description,
+           ia.duration_mins,
+           ia.passing_score_pct,
+           ia.opportunity_id,
+           ia.created_at,
+           o.title AS opportunity_title,
+           (
+               SELECT COUNT(*)
+               FROM industry_assessment_questions iaq
+               WHERE iaq.assessment_id = ia.id
+           ) AS question_count
     FROM industry_assessments ia
-    LEFT JOIN opportunities o ON o.id = ia.opportunity_id
-    LEFT JOIN applications a ON a.opportunity_id = ia.opportunity_id AND a.candidate_id = ?
+    LEFT JOIN opportunities o
+        ON o.id = ia.opportunity_id
+    LEFT JOIN applications a
+        ON a.opportunity_id = ia.opportunity_id
+       AND a.candidate_id = ?
     WHERE ia.status = 'Active'
       AND (ia.opportunity_id IS NULL OR a.id IS NOT NULL)
     ORDER BY ia.created_at DESC, ia.id DESC
