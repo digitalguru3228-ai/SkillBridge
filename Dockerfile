@@ -5,12 +5,14 @@ RUN apt-get update \
         libcurl4-openssl-dev \
         libzip-dev \
     && docker-php-ext-install pdo_mysql curl zip \
-    && a2dismod mpm_event || true \
-    && a2dismod mpm_worker || true \
-    && a2dismod mpm_prefork || true \
+    \
+    && find /etc/apache2/mods-enabled -type l -name 'mpm_*.load' -delete \
+    && find /etc/apache2/mods-enabled -type l -name 'mpm_*.conf' -delete \
+    \
     && a2enmod mpm_prefork \
     && a2enmod rewrite \
     && a2enmod headers \
+    \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
