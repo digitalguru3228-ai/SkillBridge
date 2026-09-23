@@ -1,12 +1,11 @@
-FROM php:8.2-apache
+FROM php:8.2-apache-bookworm
 
-# Install required PHP extensions and Apache modules
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libcurl4-openssl-dev \
         libzip-dev \
     && docker-php-ext-install pdo_mysql curl zip \
-    && a2dismod mpm_event mpm_worker mpm_prefork || true \
+    && a2dismod mpm_event mpm_worker || true \
     && a2enmod mpm_prefork \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
