@@ -1,12 +1,18 @@
 FROM php:8.2-apache
 
+# Install required PHP extensions and Apache modules
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libcurl4-openssl-dev libzip-dev \
+    && apt-get install -y --no-install-recommends \
+        libcurl4-openssl-dev \
+        libzip-dev \
     && docker-php-ext-install pdo_mysql curl zip \
+    && a2dismod mpm_event mpm_worker mpm_prefork || true \
+    && a2enmod mpm_prefork \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
+
 COPY . /var/www/html/
 
 RUN chown -R www-data:www-data /var/www/html \
