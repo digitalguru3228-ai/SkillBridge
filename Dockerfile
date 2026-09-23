@@ -9,10 +9,12 @@ RUN apt-get update \
     && find /etc/apache2/mods-enabled -type l -name 'mpm_*.load' -delete \
     && find /etc/apache2/mods-enabled -type l -name 'mpm_*.conf' -delete \
     \
+  && a2dismod mpm_event || true \
+    && a2dismod mpm_worker || true \
+    && a2dismod mpm_prefork || true \
     && a2enmod mpm_prefork \
     && a2enmod rewrite \
     && a2enmod headers \
-    \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
