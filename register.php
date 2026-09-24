@@ -92,7 +92,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         $candidateId = (int)$pdo->lastInsertId();
 
                         $profileStmt = $pdo->prepare('INSERT INTO student_profiles (candidate_id,user_id,degree,branch,semester,cgpa) VALUES (?,?,?,?,?,?)');
-                        $profileStmt->execute([$candidateId,$userId,'','','',0]);
+                        $profileStmt->execute([$candidateId,$userId,'','',0,0]);
                     }
 
                     $pdo->commit();
